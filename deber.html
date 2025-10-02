@@ -12,13 +12,32 @@
     .timer { margin: 20px 0; font-size: 18px; font-weight: bold; color: #27ae60; }
     button { margin-top: 8px; padding: 6px 10px; }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js"></script>
 </head>
 <body>
   <h1 id="titulo">Cargando...</h1>
-  <div class="timer">Tiempo: <span id="tiempo">0</span> segundos</div>
-  <div id="contenedor"></div>
-  <button id="btnCalificar">Calificar</button>
 
+  <!-- Registro rápido antes del deber -->
+  <div id="registro">
+    <h3>Registro rápido antes de comenzar</h3>
+    <form id="formRegistro">
+      <input type="text" id="nombre" placeholder="Nombres" required><br>
+      <input type="text" id="apellido" placeholder="Apellidos" required><br>
+      <input type="email" id="correo" placeholder="Correo institucional" required><br>
+      <button type="submit">Comenzar deber</button>
+    </form>
+    <p id="mensaje"></p>
+  </div>
+
+  <!-- Contenedor del deber, oculto hasta que se registre -->
+  <div id="contenedorDeber" style="display:none;">
+  <div class="timer" style="display:none;">Tiempo: <span id="tiempo">0</span> segundos</div>
+    <div id="contenedor"></div>
+    <button id="btnCalificar">Calificar</button>
+  </div>
+
+  <script src="firebase.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
