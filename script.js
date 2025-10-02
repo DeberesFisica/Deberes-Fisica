@@ -1,15 +1,14 @@
-// Configura tu Firebase en firebase.js
+// Importar Firebase desde firebase.js
 import { db } from "./firebase.js";
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.
-
-const db = firebase.firestore();
+import { collection, addDoc, doc, updateDoc } 
+  from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 let segundos = 0;
 let intervalo;
 let startTime;
 let intentoId;
 
-// Obtener tema desde URL
+// Obtener tema desde la URL (?tema=nombre)
 const params = new URLSearchParams(window.location.search);
 const tema = params.get("tema");
 
@@ -39,7 +38,7 @@ fetch("deberes.json")
     }
     titulo.innerText = deber.titulo;
 
-    // Evento registro rápido
+    // Evento de registro rápido
     registroForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const nombre = document.getElementById("nombre").value.trim();
@@ -47,13 +46,14 @@ fetch("deberes.json")
       const correo = document.getElementById("correo").value.trim();
 
       if (!correo.endsWith("@tudominio.edu")) {
-        document.getElementById("mensaje").innerText = "Debes usar tu correo institucional (@tudominio.edu)";
+        document.getElementById("mensaje").innerText = 
+          "Debes usar tu correo institucional (@tudominio.edu)";
         return;
       }
 
       try {
-        // Crear registro de intento
-        const docRef = await db.collection("intentos").add({
+        // Crear documento en Firestore
+        const docRef = await addDoc(collection(db, "intentos"), {
           nombre,
           apellido,
           correo,
@@ -63,14 +63,14 @@ fetch("deberes.json")
         intentoId = docRef.id;
         startTime = Date.now();
 
-        // Ocultar formulario y mostrar deber
+        // Ocultar registro y mostrar deber
         registroDiv.style.display = "none";
         contenedorDeber.style.display = "block";
 
         // Iniciar temporizador
         iniciarTimer();
 
-        // Cargar preguntas
+        // Renderizar preguntas
         deber.preguntas.forEach((p, i) => {
           const div = document.createElement("div");
           div.classList.add("pregunta");
@@ -94,6 +94,7 @@ fetch("deberes.json")
           const pista = document.createElement("div");
           pista.classList.add("pista");
           pista.innerText = p.pista || "Sin pista.";
+          pista.style.display = "none";
           div.appendChild(pista);
 
           btnPista.onclick = () => { pista.style.display = "block"; };
@@ -114,7 +115,7 @@ fetch("deberes.json")
     document.getElementById("btnCalificar").onclick = async () => {
       clearInterval(intervalo);
       const endTime = Date.now();
-      const tiempo = Math.round((endTime - startTime)/1000);
+      const tiempo = Math.round((endTime - startTime) / 1000);
 
       const preguntas = document.querySelectorAll(".pregunta");
       const respuestas = {};
@@ -130,7 +131,7 @@ fetch("deberes.json")
           retro.style.color = "orange";
           respuestas[i] = null;
         } else if (parseInt(seleccionada.value) === correcta) {
-          retro.innerText = deber.preguntas[i].retro[correcta] || "Correcto!";
+          retro.innerText = deber.preguntas[i].retro[correcta] || "¡Correcto!";
           retro.style.color = "green";
           respuestas[i] = parseInt(seleccionada.value);
           calificacion++;
@@ -144,12 +145,16 @@ fetch("deberes.json")
 
       // Guardar resultados en Firestore
       if (intentoId) {
-        await db.collection("intentos").doc(intentoId).update({
-          respuestas,
-          calificacion,
-          tiempo,
-          fechaFin: new Date()
-        });
+        try {
+          await updateDoc(doc(db, "intentos", intentoId), {
+            respuestas,
+            calificacion,
+            tiempo,
+            fechaFin: new Date()
+          });
+        } catch (err) {
+          console.error("Error guardando resultados:", err);
+        }
       }
 
       alert(`Has terminado en ${tiempo} segundos. Calificación: ${calificacion}/${preguntas.length}`);
