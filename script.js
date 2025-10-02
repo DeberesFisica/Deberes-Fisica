@@ -1,4 +1,7 @@
 // Configura tu Firebase en firebase.js
+import { db } from "./firebase.js";
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.
+
 const db = firebase.firestore();
 
 let segundos = 0;
