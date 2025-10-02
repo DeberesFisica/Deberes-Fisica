@@ -1,0 +1,57 @@
+{
+  "fisica": {
+    "titulo": "Deber de Física",
+    "preguntas": [
+      {
+        "enunciado": "¿Cuál es la unidad de la fuerza en el SI?",
+        "opciones": [
+          "Joule",
+          "Newton",
+          "Watt"
+        ],
+        "correcta": 1,
+        "pista": "Recuerda: la fuerza es masa por aceleración.",
+        "retro": [
+          "Incorrecto, el joule es unidad de energía.",
+          "¡Correcto! Un Newton es la unidad de fuerza.",
+          "Incorrecto, el watt mide potencia."
+        ]
+      },
+      {
+        "enunciado": "¿Cuál es la velocidad de la luz en el vacío?",
+        "opciones": [
+          "3.0 × 10^5 m/s",
+          "1.5 × 10^8 m/s",
+          "3.0 × 10^8 m/s"
+        ],
+        "correcta": 2,
+        "pista": "Es un número muy grande, del orden de 10^8.",
+        "retro": [
+          "Incorrecto, es demasiado bajo.",
+          "Incorrecto, estás cerca pero no es exacto.",
+          "¡Exacto! La velocidad de la luz es 3.0 × 10^8 m/s."
+        ]
+      }
+    ]
+  },
+  "matematicas": {
+    "titulo": "Deber de Matemáticas",
+    "preguntas": [
+      {
+        "enunciado": "¿Cuánto es 12 × 8?",
+        "opciones": [
+          "96",
+          "108",
+          "112"
+        ],
+        "correcta": 0,
+        "pista": "Piensa en múltiplos de 12.",
+        "retro": [
+          "¡Correcto! 12 × 8 = 96.",
+          "Incorrecto, revisa la multiplicación.",
+          "Incorrecto, revisa la multiplicación."
+        ]
+      }
+    ]
+  }
+}
