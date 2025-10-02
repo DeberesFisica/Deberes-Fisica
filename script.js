@@ -1,9 +1,23 @@
-// script.js - Lógica para cargar deberes, temporizador, pistas y calificación
+// Configura tu Firebase en firebase.js
+const db = firebase.firestore();
+
 let segundos = 0;
 let intervalo;
+let startTime;
+let intentoId;
+
+// Obtener tema desde URL
 const params = new URLSearchParams(window.location.search);
 const tema = params.get("tema");
 
+// Referencias DOM
+const registroForm = document.getElementById("formRegistro");
+const registroDiv = document.getElementById("registro");
+const contenedorDeber = document.getElementById("contenedorDeber");
+const contenedor = document.getElementById("contenedor");
+const titulo = document.getElementById("titulo");
+
+// Función de temporizador
 function iniciarTimer() {
   intervalo = setInterval(() => {
     segundos++;
@@ -11,60 +25,97 @@ function iniciarTimer() {
   }, 1000);
 }
 
-// Intentamos cargar el JSON con fetch. Nota: esto requiere servir los archivos por HTTP.
-// Si abres el archivo con file:// en Chrome/Edge puede bloquearse. Usa un servidor local (ver README).
+// Cargar deberes desde JSON local
 fetch("deberes.json")
-  .then(res => {
-    if (!res.ok) throw new Error("No se pudo cargar deberes.json: " + res.status);
-    return res.json();
-  })
+  .then(res => res.json())
   .then(data => {
     const deber = data[tema];
     if (!deber) {
-      document.getElementById("titulo").innerText = "Deber no encontrado: " + tema;
+      titulo.innerText = "Deber no encontrado: " + tema;
       return;
     }
+    titulo.innerText = deber.titulo;
 
-    document.getElementById("titulo").innerText = deber.titulo;
-    const contenedor = document.getElementById("contenedor");
+    // Evento registro rápido
+    registroForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById("nombre").value.trim();
+      const apellido = document.getElementById("apellido").value.trim();
+      const correo = document.getElementById("correo").value.trim();
 
-    deber.preguntas.forEach((p, i) => {
-      const div = document.createElement("div");
-      div.classList.add("pregunta");
-      div.dataset.correcta = p.correcta;
+      if (!correo.endsWith("@tudominio.edu")) {
+        document.getElementById("mensaje").innerText = "Debes usar tu correo institucional (@tudominio.edu)";
+        return;
+      }
 
-      const enunciado = document.createElement("p");
-      enunciado.innerHTML = (i + 1) + ". " + p.enunciado;
-      div.appendChild(enunciado);
+      try {
+        // Crear registro de intento
+        const docRef = await db.collection("intentos").add({
+          nombre,
+          apellido,
+          correo,
+          tema,
+          fechaInicio: new Date()
+        });
+        intentoId = docRef.id;
+        startTime = Date.now();
 
-      p.opciones.forEach((op, j) => {
-        const label = document.createElement("label");
-        label.innerHTML = `<input type="radio" name="p${i}" value="${j}"> ${op}`;
-        div.appendChild(label);
-        div.appendChild(document.createElement("br"));
-      });
+        // Ocultar formulario y mostrar deber
+        registroDiv.style.display = "none";
+        contenedorDeber.style.display = "block";
 
-      const btnPista = document.createElement("button");
-      btnPista.innerText = "Ver pista";
-      div.appendChild(btnPista);
+        // Iniciar temporizador
+        iniciarTimer();
 
-      const pista = document.createElement("div");
-      pista.classList.add("pista");
-      pista.innerText = p.pista || "Sin pista.";
-      div.appendChild(pista);
+        // Cargar preguntas
+        deber.preguntas.forEach((p, i) => {
+          const div = document.createElement("div");
+          div.classList.add("pregunta");
+          div.dataset.correcta = p.correcta;
 
-      btnPista.onclick = () => { pista.style.display = "block"; };
+          const enunciado = document.createElement("p");
+          enunciado.innerHTML = (i + 1) + ". " + p.enunciado;
+          div.appendChild(enunciado);
 
-      const retro = document.createElement("div");
-      retro.classList.add("retro");
-      div.appendChild(retro);
+          p.opciones.forEach((op, j) => {
+            const label = document.createElement("label");
+            label.innerHTML = `<input type="radio" name="p${i}" value="${j}"> ${op}`;
+            div.appendChild(label);
+            div.appendChild(document.createElement("br"));
+          });
 
-      contenedor.appendChild(div);
+          const btnPista = document.createElement("button");
+          btnPista.innerText = "Ver pista";
+          div.appendChild(btnPista);
+
+          const pista = document.createElement("div");
+          pista.classList.add("pista");
+          pista.innerText = p.pista || "Sin pista.";
+          div.appendChild(pista);
+
+          btnPista.onclick = () => { pista.style.display = "block"; };
+
+          const retro = document.createElement("div");
+          retro.classList.add("retro");
+          div.appendChild(retro);
+
+          contenedor.appendChild(div);
+        });
+
+      } catch (error) {
+        document.getElementById("mensaje").innerText = "Error al registrar: " + error.message;
+      }
     });
 
-    document.getElementById("btnCalificar").onclick = () => {
+    // Botón calificar
+    document.getElementById("btnCalificar").onclick = async () => {
       clearInterval(intervalo);
+      const endTime = Date.now();
+      const tiempo = Math.round((endTime - startTime)/1000);
+
       const preguntas = document.querySelectorAll(".pregunta");
+      const respuestas = {};
+      let calificacion = 0;
 
       preguntas.forEach((div, i) => {
         const correcta = parseInt(div.dataset.correcta);
@@ -74,22 +125,35 @@ fetch("deberes.json")
         if (!seleccionada) {
           retro.innerText = "No respondiste esta pregunta.";
           retro.style.color = "orange";
+          respuestas[i] = null;
         } else if (parseInt(seleccionada.value) === correcta) {
           retro.innerText = deber.preguntas[i].retro[correcta] || "Correcto!";
           retro.style.color = "green";
+          respuestas[i] = parseInt(seleccionada.value);
+          calificacion++;
         } else {
           const idx = parseInt(seleccionada.value);
           retro.innerText = deber.preguntas[i].retro[idx] || "Incorrecto.";
           retro.style.color = "red";
+          respuestas[i] = idx;
         }
       });
 
-      alert("Has terminado en " + segundos + " segundos.");
+      // Guardar resultados en Firestore
+      if (intentoId) {
+        await db.collection("intentos").doc(intentoId).update({
+          respuestas,
+          calificacion,
+          tiempo,
+          fechaFin: new Date()
+        });
+      }
+
+      alert(`Has terminado en ${tiempo} segundos. Calificación: ${calificacion}/${preguntas.length}`);
     };
 
-    iniciarTimer();
   })
   .catch(err => {
     console.error(err);
-    document.getElementById("titulo").innerText = "Error cargando deberes.json. Revisa la consola.";
+    titulo.innerText = "Error cargando deberes.json. Revisa la consola.";
   });
