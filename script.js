@@ -47,7 +47,7 @@ fetch("deberes.json")
 
       if (!correo.endsWith("@epn.edu.ec")) {
         document.getElementById("mensaje").innerText = 
-          "Debes usar tu correo institucional (@tudominio.edu)";
+          "Debes usar tu correo institucional (@epn.edu.ec)";
         return;
       }
 
