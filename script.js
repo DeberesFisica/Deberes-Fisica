@@ -45,7 +45,7 @@ fetch("deberes.json")
       const apellido = document.getElementById("apellido").value.trim();
       const correo = document.getElementById("correo").value.trim();
 
-      if (!correo.endsWith("@tudominio.edu")) {
+      if (!correo.endsWith("@epn.edu.ec")) {
         document.getElementById("mensaje").innerText = 
           "Debes usar tu correo institucional (@tudominio.edu)";
         return;
